@@ -124,13 +124,23 @@ async def handle(reader, writer):
         return
     if "upgrade" not in h.get("connection", "").lower() and h.get("upgrade", "").lower() != "websocket":
         body = b"OK"
-        if reqline.split(" ")[1:2] == ["/termux_proxy.py"]:  # unduhan script klien Termux (tidak rahasia)
+        ctype = b"text/plain"
+        path = reqline.split(" ")[1:2]
+        base = os.path.dirname(os.path.abspath(__file__))
+        downloads = {
+            "/termux_proxy.py": ("termux_proxy.py", b"text/plain"),
+            "/termux_proxy.go": ("termux_proxy.go", b"text/plain"),
+            "/termux_proxy-android-arm64": ("dist/termux_proxy-android-arm64", b"application/octet-stream"),
+            "/termux_proxy-android-arm": ("dist/termux_proxy-android-arm", b"application/octet-stream"),
+        }
+        if path and path[0] in downloads:
+            fname, ctype = downloads[path[0]]
             try:
-                with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "termux_proxy.py"), "rb") as f:
+                with open(os.path.join(base, fname), "rb") as f:
                     body = f.read()
             except OSError:
-                pass
-        writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\nConnection: close\r\n\r\n" % len(body) + body)
+                body = b"not found"
+        writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: close\r\n\r\n" % (ctype, len(body)) + body)
         await writer.drain()
         writer.close()
         return

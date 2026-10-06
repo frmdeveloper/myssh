@@ -13,5 +13,6 @@ tunnel.token
 # Binary / deps
 venv/
 badvpn/
+dist/
 __pycache__/
 *.pyc

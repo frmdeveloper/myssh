@@ -58,12 +58,40 @@ Catatan:
 - UDPGW: `127.0.0.1` port `7300`
 
 ## Opsi B: lewat Termux (HTTP Custom cukup konek ke localhost)
-Di Termux: `pkg install python`, salin `termux_proxy.py`, jalankan:
+
+### B1: Go binary (paling ringan, no Python di Termux)
+Download satu file binary langsung dari tunnel (gak perlu install Python):
 ```bash
-python3 termux_proxy.py --host HOSTNAME_TUNNEL
+# di Termux (HP 64-bit modern):
+wget https://<HOSTNAME_TUNNEL>/termux_proxy-android-arm64 -O termux_proxy
+chmod +x termux_proxy
+./termux_proxy --host <HOSTNAME_TUNNEL>
+
+# HP 32-bit:
+wget https://<HOSTNAME_TUNNEL>/termux_proxy-android-arm -O termux_proxy
 ```
 Di HTTP Custom: SSH Host `127.0.0.1`, Port `2222`, **tanpa payload, tanpa SSL**, user/password akun, UDPGW `127.0.0.1:7300`.
-Variasi: `--connect IP_LAIN` (konek ke IP lain, Host/SNI tetap), `--sni NAMA` (SNI berbeda).
+
+### B2: Python (alternatif)
+Di Termux: `pkg install python`, salin `termux_proxy.py`, jalankan:
+```bash
+python3 termux_proxy.py --host <HOSTNAME_TUNNEL>
+```
+Di HTTP Custom: SSH Host `127.0.0.1`, Port `2222`, **tanpa payload, tanpa SSL**, user/password akun, UDPGW `127.0.0.1:7300`.
+
+Variasi (berlaku B1 dan B2):
+- `--connect IP_LAIN` — konek ke IP lain, Host/SNI tetap
+- `--sni NAMA` — SNI berbeda (domain fronting ke bug host)
+- `--no-tls --port 80` — plain HTTP, tanpa SNI (untuk bug host di port 80)
+- `--listen-port N` — ganti port listen (default 2222)
+
+### Build ulang binary Go (di server)
+```bash
+sudo apt install golang-go   # sekali aja
+mkdir -p dist
+CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build -ldflags="-s -w" -o dist/termux_proxy-android-arm64 termux_proxy.go
+CGO_ENABLED=0 GOOS=linux   GOARCH=arm   go build -ldflags="-s -w" -o dist/termux_proxy-android-arm   termux_proxy.go
+```
 
 ## Tes
 ```bash
