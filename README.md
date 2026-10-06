@@ -55,46 +55,9 @@ Catatan:
   ```
 - UDPGW: `127.0.0.1` port `7300`
 
-## Opsi B: lewat Termux (HTTP Custom cukup konek ke localhost)
-
-### B1: Go binary (paling ringan, no Python di Termux)
-Download satu file binary langsung dari tunnel (gak perlu install Python):
-```bash
-# di Termux (HP 64-bit modern):
-wget https://<HOSTNAME_TUNNEL>/termux_proxy-android-arm64 -O termux_proxy
-chmod +x termux_proxy
-./termux_proxy --host <HOSTNAME_TUNNEL>
-
-# HP 32-bit:
-wget https://<HOSTNAME_TUNNEL>/termux_proxy-android-arm -O termux_proxy
-```
-Di HTTP Custom: SSH Host `127.0.0.1`, Port `2222`, **tanpa payload, tanpa SSL**, user/password akun, UDPGW `127.0.0.1:7300`.
-
-### B2: Python (alternatif)
-Di Termux: `pkg install python`, salin `termux_proxy.py`, jalankan:
-```bash
-python3 termux_proxy.py --host <HOSTNAME_TUNNEL>
-```
-Di HTTP Custom: SSH Host `127.0.0.1`, Port `2222`, **tanpa payload, tanpa SSL**, user/password akun, UDPGW `127.0.0.1:7300`.
-
-Variasi (berlaku B1 dan B2):
-- `--connect IP_LAIN` — konek ke IP lain, Host/SNI tetap
-- `--sni NAMA` — SNI berbeda (domain fronting ke bug host)
-- `--no-tls --port 80` — plain HTTP, tanpa SNI (untuk bug host di port 80)
-- `--listen-port N` — ganti port listen (default 2222)
-
-### Build ulang binary Go (di server)
-```bash
-sudo apt install golang-go   # sekali aja
-mkdir -p dist
-CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build -ldflags="-s -w" -o dist/termux_proxy-android-arm64 termux_proxy.go
-CGO_ENABLED=0 GOOS=linux   GOARCH=arm   go build -ldflags="-s -w" -o dist/termux_proxy-android-arm   termux_proxy.go
-```
-
 ## Tes
 ```bash
 ./test_e2e.sh "" USER PASS        # login, IP keluar, HTTPS, blokir internal, UDP/DNS via udpgw
-./test_termux.sh HOST USER PASS   # jalur Termux
 ```
 
 ## Domain Pribadi (Named Tunnel)
@@ -166,7 +129,6 @@ curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
 ### Langkah 6: Update config di HP
 Ganti semua `*.trycloudflare.com` jadi `ssh.domainmu.com`:
 
-**Opsi A (HTTP Custom langsung):**
 - Host: `ssh.domainmu.com`
 - Port: `443` (TLS) atau `80` (plain, tanpa SNI)
 - SSL/SNI: `ssh.domainmu.com` (kalo port 443)
@@ -174,11 +136,6 @@ Ganti semua `*.trycloudflare.com` jadi `ssh.domainmu.com`:
   ```
   GET / HTTP/1.1[crlf]Host: ssh.domainmu.com[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf]Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==[crlf]Sec-WebSocket-Version: 13[crlf][crlf]
   ```
-
-**Opsi B1 (Termux Go binary):**
-```bash
-./termux_proxy --host ssh.domainmu.com
-```
 
 ### Troubleshooting Named Tunnel
 | Gejala | Penyebab | Solusi |
