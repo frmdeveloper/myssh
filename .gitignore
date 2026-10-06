@@ -1,0 +1,17 @@
+# Runtime / state
+logs/
+run/
+*.pid
+*.log
+
+# Secrets (jangan di-push!)
+users.json
+keys/
+tunnel.token
+*.token
+
+# Binary / deps
+venv/
+badvpn/
+__pycache__/
+*.pyc
