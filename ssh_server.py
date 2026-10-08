@@ -31,6 +31,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 USERS_FILE = os.environ.get("USERS_FILE", os.path.join(BASE, "users.json"))
 HOST_KEY = os.environ.get("HOST_KEY", os.path.join(BASE, "keys", "ssh_host_ed25519"))
 AUTH_KEYS = os.environ.get("AUTH_KEYS", os.path.join(BASE, "keys", "authorized_keys"))
+BANNER_FILE = os.path.join(BASE, "banner.txt")
 LISTEN_HOST = os.environ.get("SSH_LISTEN_HOST", "127.0.0.1")
 LISTEN_PORT = int(os.environ.get("SSH_LISTEN_PORT", "2222"))
 UDPGW_PORT = int(os.environ.get("UDPGW_PORT", "7300"))
@@ -102,6 +103,13 @@ class TunnelServer(asyncssh.SSHServer):
 
     def begin_auth(self, username):
         self._user = username
+        try:
+            with open(BANNER_FILE, encoding="utf-8") as f:
+                _banner = f.read().strip("\n")
+            if _banner:
+                self._conn.send_auth_banner(_banner)
+        except Exception:
+            pass
         return True
 
     def password_auth_supported(self):
