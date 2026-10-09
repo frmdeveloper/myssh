@@ -19,6 +19,7 @@ components() {
   echo "udpgw|$D/badvpn/build/udpgw/badvpn-udpgw --listen-addr 127.0.0.1:$UDPGW_PORT --max-clients 500 --max-connections-for-client 20"
   echo "sshd|SSH_LISTEN_PORT=$SSH_PORT UDPGW_PORT=$UDPGW_PORT $PY $D/ssh_server.py serve"
   echo "ws2ssh|WS_PORT=$WS_PORT SSH_PORT=$SSH_PORT $PY $D/ws2ssh.py"
+  echo "ws2ssh-shell|WS_PORT=8081 SSH_PORT=22 $PY $D/ws2ssh.py"
   if [ -s "$D/tunnel.token" ]; then
     echo "cloudflared|cloudflared tunnel --no-autoupdate run --token \$(cat $D/tunnel.token)"
   else
