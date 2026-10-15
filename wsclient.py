@@ -46,7 +46,19 @@ stdin_fd = sys.stdin.fileno(); out = sys.stdout.buffer
 rbuf = b""
 try:
     while True:
-        r, _, _ = select.select([stdin_fd, s], [], [])
+        # FIX: socket TLS bisa menyimpan data terdekripsi di buffer internal
+        # (ssl pending) yang tidak terlihat oleh select() di fd mentah ->
+        # frame yang datang nempel dalam satu record TLS nyangkut selamanya
+        # (gejala: ssh klien stuck di "expecting SSH2_MSG_NEWKEYS").
+        # Kalau pending > 0, jangan tunggu select; langsung baca dari socket.
+        try:
+            pend = s.pending() > 0
+        except Exception:
+            pend = False
+        if pend:
+            r = [s]
+        else:
+            r, _, _ = select.select([stdin_fd, s], [], [])
         if stdin_fd in r:
             d = os.read(stdin_fd, 65536)
             if not d: break
