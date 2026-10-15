@@ -56,10 +56,29 @@ else
 fi
 
 termux-wake-lock 2>/dev/null
-echo "[*] Inject nyala: SOCKS5 127.0.0.1:$SOCKS_PORT — Ctrl+C buat stop"
-trap 'echo; echo "[*] Stop."; termux-wake-unlock 2>/dev/null; exit 0' INT TERM
+SSH_PID=""
+cleanup() {
+  echo; echo "[*] Stop."
+  [ -n "$SSH_PID" ] && kill "$SSH_PID" 2>/dev/null
+  termux-wake-unlock 2>/dev/null
+  exit 0
+}
+trap cleanup INT TERM
+echo "[*] Inject siap: SOCKS5 127.0.0.1:$SOCKS_PORT — Ctrl+C buat stop"
 while true; do
-  "${RUN[@]}"
+  IP=""
+  "${RUN[@]}" &
+  SSH_PID=$!
+  # Tunggu sampe SOCKS beneran jawab (= login sukses, tunnel naik)
+  while kill -0 "$SSH_PID" 2>/dev/null; do
+    IP=$(curl -s --max-time 3 --socks5-hostname "127.0.0.1:$SOCKS_PORT" https://api.ipify.org 2>/dev/null)
+    [ -n "$IP" ] && break
+    sleep 2
+  done
+  if [ -n "$IP" ]; then
+    echo "[✓] NYAMBUNG — IP: $IP"
+    wait "$SSH_PID" 2>/dev/null
+  fi
   echo "[!] Putus — nyambung lagi 3 detik... (Ctrl+C buat stop beneran)"
   sleep 3
 done
