@@ -41,7 +41,14 @@ fi
 PROXY="python3 $WSCLIENT $SERVER_HOST $SERVER_PORT --tls"
 [ -n "$WS_SNI" ] && PROXY="$PROXY --sni $WS_SNI"
 
+# Login pake SSH key kalo ada (nggak perlu password); password cuma cadangan
+KEY_OPTS=()
+if [ -f "$HOME/.ssh/id_ed25519" ]; then
+  KEY_OPTS=(-i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o PreferredAuthentications=publickey,password)
+fi
+
 SSH_CMD=(ssh -o "ProxyCommand=$PROXY"
+  "${KEY_OPTS[@]}"
   -o StrictHostKeyChecking=accept-new
   -o ServerAliveInterval=15 -o ServerAliveCountMax=3
   -o ExitOnForwardFailure=yes
